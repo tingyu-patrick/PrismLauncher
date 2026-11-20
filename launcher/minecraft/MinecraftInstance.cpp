@@ -86,6 +86,8 @@
 #include "mod/DataPackFolderModel.h"
 
 #include "WorldList.h"
+#include "Component.h"
+
 
 #include "AssetsUtils.h"
 #include "MinecraftLoadAndCheck.h"
@@ -1108,8 +1110,22 @@ QString MinecraftInstance::getStatusbarDescription()
         mcVersion = m_components->getComponentVersion("net.minecraft");
     }
 
+    // find if any mod loader
+    QString loaderName;
+    for (const auto& loaderId : Component::KNOWN_MODLOADERS.keys()) {
+        auto comp = m_components->getComponent(loaderId);
+        if (comp && comp->isEnabled()) {
+            loaderName = comp->getName(); // ex: "Fabric Loader" or "Forge"
+            break;
+        }
+    }
+
     QString description;
-    description.append(tr("Minecraft %1").arg(mcVersion));
+    if (!loaderName.isEmpty()) {
+        description.append(tr("Minecraft %1 (%2)").arg(mcVersion, loaderName));
+    } else {
+        description.append(tr("Minecraft %1").arg(mcVersion));
+    }
     if (m_settings->get("ShowGameTime").toBool()) {
         if (lastTimePlayed() > 0 && lastLaunch() > 0) {
             QDateTime lastLaunchTime = QDateTime::fromMSecsSinceEpoch(lastLaunch());
